@@ -17,12 +17,12 @@ function is_flag_enabled( $assoc_args, $flag ) {
 	return isset( $assoc_args[$flag] ) && (bool) $assoc_args[$flag] ? true : false;
 }
 
-function handle_response( $response, $stop_on_error=true ) {
+function handle_response( $response, $continue_on_error=true ) {
 	if( $response->return_code > 0 ) {
-		if( $stop_on_error ) {
-			WP_CLI::error( str_replace( 'Error: ', '', $response->stderr ) );
-		} else {
+		if( $continue_on_error ) {
 			WP_CLI::log( $response->stderr );
+		} else {
+			WP_CLI::error( str_replace( array('Error: ', 'Warning: '), '', $response->stderr ) );
 		}
 	} else {
 		if( !empty( $response->stderr ) ) {
@@ -64,9 +64,7 @@ function installed_plugins_list( $blog_id=null ) {
 function plugin_install( $plugin_name, $continue_on_error ) {
 	$response = WP_CLI::launch_self( 'plugin install', array( $plugin_name ), array('activate' => $activate), false, true );
 
-	handle_response( $response, $continue_on_error );
-
-	return $response->return_code;
+	return handle_response( $response, $continue_on_error );
 }
 
 function install_missing_plugins( $dry_run, $continue_on_error=false, $site=null ) {
@@ -74,9 +72,11 @@ function install_missing_plugins( $dry_run, $continue_on_error=false, $site=null
 	if( $site == null ) {
 		$active_plugins = active_plugins_list( );
 		$installed_plugins = installed_plugins_list( );
+		$success_message = 'Installed missing plugins.';
 	} else {
 		$active_plugins = active_plugins_list( $site->url );
 		$installed_plugins = installed_plugins_list( $site->blog_id );
+		$success_message = 'Installed missing plugins for ' . $site->url .'.';
 	}
 	
 	$missing_plugins = array_diff( $installed_plugins, $active_plugins );
@@ -107,9 +107,9 @@ function install_missing_plugins( $dry_run, $continue_on_error=false, $site=null
 	// Install plugins
 	WP_CLI::log( 'Installing plugins...' );
 	foreach( $missing_plugins as $plugin ) {
-		$return_code = plugin_install( $plugin, $continue_on_error );
+		plugin_install( $plugin, $continue_on_error );
 	}
-	WP_CLI::success( 'Installed missing plugins.' );
+	WP_CLI::success( $success_message );
 }
 
 /**
@@ -140,10 +140,10 @@ function be_wpcli_install_missing( $args, $assoc_args ) {
 	}
 
 	if($sites == null) {
-		install_missing_plugins( $dry_run, $stop_on_error );
+		install_missing_plugins( $dry_run, $continue_on_error );
 	} else {
 		foreach ($sites as $site) {
-			install_missing_plugins( $dry_run, $stop_on_error, $site );
+			install_missing_plugins( $dry_run, $continue_on_error, $site );
 		}
 	}
 }
