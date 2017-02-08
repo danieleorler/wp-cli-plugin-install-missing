@@ -4,8 +4,8 @@ Feature: Install any plugins that are active but missing
     Given a WP install
     And I run `wp plugin install-missing --dry-run`
     Then STDOUT should contain:
-       """
-   No missing plugins
+      """
+      No missing plugins
       """
 
   Scenario: Install missing plugins
@@ -17,12 +17,25 @@ Feature: Install any plugins that are active but missing
       """
       display-posts-shortcode
       """
-    
     When I run `wp plugin install-missing`
     Then STDOUT should contain:
       """
-    Installed missing plugins.
+      Installed missing plugins.
       """
+
+  Scenario: Run network mode on a normal installation
+    Given a WP install
+    And I try `wp plugin install-missing --dry-run --network`
+    Then STDERR should contain:
+      """
+      This is not a multisite installation!
+      """
+    And STDERR should contain:
+      """
+      Remove the --network flag to run the plugin on a normal installation
+      """
+    And the return code should be 1
+
 
   Scenario: Install missing plugins network-wide
     Given a WP multisite subdomain install
@@ -77,6 +90,7 @@ Feature: Install any plugins that are active but missing
       Success: No missing plugins
       """
 
+
   Scenario: Install missing plugins network-wide with error
     Given a WP multisite subdomain install
     And I run `wp site create --slug=site1`
@@ -96,6 +110,7 @@ Feature: Install any plugins that are active but missing
       Couldn't find 'non-existing-plugin' in the WordPress.org plugin directory.
       """
     And the return code should be 1
+
 
   Scenario: Install missing plugins network-wide continue on error
     Given a WP multisite subdomain install
@@ -121,3 +136,13 @@ Feature: Install any plugins that are active but missing
       Success: Installed missing plugins for http://site1.example.com/.
       """
     And the return code should be 0
+    When I run `wp plugin install-missing --network --dry-run`
+    Then STDOUT should contain:
+      """
+      Site: http://example.com/
+      The following plugins are missing:
+      * non-existing-plugin
+      
+      Site: http://site1.example.com/
+      Success: No missing plugins
+      """
