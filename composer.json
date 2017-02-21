@@ -1,5 +1,5 @@
 {
-	"name": "billerickson/wp-cli-plugin-install-missing",
+	"name": "danieleorler/wp-cli-plugin-install-missing",
 	"description": "Install any plugins that are active but missing.",
 	"type": "wp-cli-package",
 	"homepage": "https://github.com/billerickson/wp-cli-plugin-install-missing",
