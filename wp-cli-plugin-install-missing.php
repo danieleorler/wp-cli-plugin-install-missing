@@ -23,6 +23,7 @@ function handle_response( $response, $continue_on_error=true ) {
 			WP_CLI::log( $response->stderr );
 		} else {
 			WP_CLI::error( str_replace( array('Error: ', 'Warning: '), '', $response->stderr ) );
+			WP_CLI::halt( 1 );
 		}
 	} else {
 		if( !empty( $response->stderr ) ) {
@@ -132,6 +133,14 @@ function be_wpcli_install_missing( $args, $assoc_args ) {
 	$dry_run = is_flag_enabled( $assoc_args, 'dry-run' );
 	$network = is_flag_enabled( $assoc_args, 'network' );
 	$continue_on_error = is_flag_enabled( $assoc_args, 'continue-on-error' );
+
+	if( $network && !is_multisite( ) ) {
+		WP_CLI::error_multi_line( array(
+			"This is not a multisite installation!",
+			"Remove the --network flag to run the plugin on a normal installation"
+		) );
+		WP_CLI::halt( 1 );
+	}
 
 	$sites = null;
 	if( $network ) {
